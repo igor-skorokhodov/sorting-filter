@@ -4,8 +4,6 @@ import Flights from "../flights.json";
 interface IFieldProps {}
 
 interface IFieldState {
-  isClicked?: boolean; //флаг клика
-  downActive: boolean; //флаг нажатия на ячейку
   flights: any[];
   Compare: { LESS_THAN: -1; BIGGER_THAN: 1 }; //массив ячеек
   quantity: number;
@@ -13,6 +11,8 @@ interface IFieldState {
   valueTill: number;
   companies: any[];
   company: string;
+  isClickedStraight: boolean;
+  isClickedChange: boolean;
 }
 
 let FLIGHTS = (Flights as any).result.flights;
@@ -21,8 +21,6 @@ export default class Field extends React.Component<IFieldProps, IFieldState> {
   constructor(props: IFieldProps) {
     super(props);
     this.state = {
-      isClicked: false,
-      downActive: false,
       flights: FLIGHTS,
       Compare: {
         LESS_THAN: -1,
@@ -33,6 +31,8 @@ export default class Field extends React.Component<IFieldProps, IFieldState> {
       valueTill: 0,
       companies: [],
       company: "",
+      isClickedStraight: false,
+      isClickedChange: false,
     };
   }
 
@@ -94,7 +94,16 @@ export default class Field extends React.Component<IFieldProps, IFieldState> {
         j++;
       }
     }
-    this.setState({ flights: array }, this.renderCompanies);
+    this.setState(
+      { flights: array, isClickedStraight: true },
+      this.renderCompanies
+    );
+    if (this.state.isClickedStraight === false) {
+      this.setState({ isClickedStraight: true });
+    } else {
+      this.setState({ isClickedStraight: false });
+      this.setState({ flights: FLIGHTS}, this.renderCompanies);
+    }
   }
 
   filterChange(arr: any) {
@@ -108,6 +117,12 @@ export default class Field extends React.Component<IFieldProps, IFieldState> {
         array[j] = array2[i];
         j++;
       }
+    }
+    if (this.state.isClickedChange === false) {
+      this.setState({ isClickedChange: true });
+    } else {
+      this.setState({ isClickedChange: false });
+      this.setState({ flights: FLIGHTS}, this.renderCompanies);
     }
     this.setState({ flights: array }, this.renderCompanies);
   }
@@ -157,11 +172,11 @@ export default class Field extends React.Component<IFieldProps, IFieldState> {
   }
 
   handleChangeFrom(event: any) {
-    this.setState({ valueFrom: event.target.value });
+    this.setState({ valueFrom: event.target.value }, this.filterPrice);
   }
 
   handleChangeTill(event: any) {
-    this.setState({ valueTill: event.target.value });
+    this.setState({ valueTill: event.target.value }, this.filterPrice);
   }
 
   filterPrice() {
@@ -193,8 +208,8 @@ export default class Field extends React.Component<IFieldProps, IFieldState> {
     this.setState({ flights: array });
   }
 
-  filterDrop () {
-    this.setState({flights: FLIGHTS}, this.renderCompanies)
+  filterDrop() {
+    this.setState({ flights: FLIGHTS }, this.renderCompanies);
   }
 
   renderCompanies() {
@@ -203,7 +218,9 @@ export default class Field extends React.Component<IFieldProps, IFieldState> {
     for (let i = 1; i < array2.length; i++) {
       array[i] = array2[i].flight.carrier.caption;
     }
-    this.setState({ companies: array.filter((val, ind, arr) => arr.indexOf(val) === ind) });
+    this.setState({
+      companies: array.filter((val, ind, arr) => arr.indexOf(val) === ind),
+    });
   }
 
   handleButtonClick() {
@@ -249,6 +266,7 @@ export default class Field extends React.Component<IFieldProps, IFieldState> {
                 onClick={() => {
                   this.filterStraight(this.state.flights);
                 }}
+                style={this.state.isClickedStraight? {backgroundColor: "#f2bf0a"} :{backgroundColor: "#e9b809"}}
               >
                 Без пересадок
               </button>
@@ -257,16 +275,9 @@ export default class Field extends React.Component<IFieldProps, IFieldState> {
                 onClick={() => {
                   this.filterChange(this.state.flights);
                 }}
+                style={this.state.isClickedChange? {backgroundColor: "#f2bf0a"} :{backgroundColor: "#e9b809"}}
               >
                 1 пересадка
-              </button>
-              <button
-                className="button_short"
-                onClick={() => {
-                  this.filterDrop();
-                }}
-              >
-                Сбросить фильтры
               </button>
             </div>
             <div className="price_filter_container">
@@ -285,32 +296,23 @@ export default class Field extends React.Component<IFieldProps, IFieldState> {
                 onChange={this.handleChangeTill.bind(this)}
                 placeholder="до"
               />
-              <button
-                className="button_short"
-                onClick={() => {
-                  this.filterPrice();
-                }}
-              >
-                Фильтровать
-              </button>
             </div>
-            <div className="price_filter_container_ac">    
+            <div className="price_filter_container_ac">
               <p className="ac_header"> Авиакомпании</p>
               {this.state.companies.map((company, i) => {
-                  return (
-                    <>
-                        <button
-                          className="button_small"
-                          onClick={() => {
-                            this.filterCompany(company);
-                          }}
-                        >
-                          {company}
-                        </button>
-                    </>
-                  );
-                }
-              )}
+                return (
+                  <>
+                    <button
+                      className="button_small"
+                      onClick={() => {
+                        this.filterCompany(company);
+                      }}
+                    >
+                      {company}
+                    </button>
+                  </>
+                );
+              })}
             </div>
           </div>
           <div className="field">
